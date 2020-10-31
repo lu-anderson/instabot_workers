@@ -1,0 +1,5 @@
+{
+    "inputLogin": "#login_form > form > div.wrap-input100.validate-input.m-t-85.m-b-35 > input",
+    "inputPassword": "#login_form > form > div.wrap-input100.validate-input.m-b-50 > input",
+    "btnLogin": "#login_form > form > div.container-login100-form-btn > button"
+}

@@ -1,0 +1,5 @@
+{
+    "inputLogin": "#login",
+    "inputPassword": "#senha",
+    "btnLogin": "#FormLogin > div.btn_site.col-sm-12.col-xs-12.col-lg-12 > button"
+}
