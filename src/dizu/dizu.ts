@@ -11,7 +11,7 @@ let browser: Browser
 let page: Page
 
 async function startBrowser(headless: boolean) {
-	browser = await puppeteer.launch({ headless, devtools: true })
+	browser = await puppeteer.launch({ headless, devtools: false })
 }
 
 async function goToDizu() {
@@ -66,9 +66,9 @@ async function getAllProfiles() {
 		let profile
 		let cont = 2
 		const profiles = []
-		await page.waitForSelector('#instagram_id')
+		await page.waitForSelector(selectors.selectProfile)
 		do {
-			profile = await page.waitForSelector(`#instagram_id > option:nth-child(${cont})`, { timeout: 500 }).catch(() => { })
+			profile = await page.waitForSelector(`${selectors.selectProfile} > option:nth-child(${cont})`, { timeout: 500 }).catch(() => { })
 
 			if (profile !== undefined) {
 				let textProfile = await page.evaluate(element =>
@@ -85,26 +85,61 @@ async function getAllProfiles() {
 	}
 }
 
-async function findProfile(userInArray: string, user: string) {
+function findProfile(userInArray: string, user: string) {
 	const index = userInArray.indexOf(user)
 	return index > -1
 }
 
-/* async function chooseAccount(user: string) {
+async function chooseAccount(user: string) {
 	try {
 		let accountSeleted = 0
 		const accounts = await getAllProfiles()
-		if (accounts !== undefined) {
-			accountSeleted = accounts.findIndex((e) => this.findProfile(e, user))
-		}
-		const account = await this.driver
-			.findElement({ xpath: `//*[@id="instagram_id"]/option[${accountSeleted + 2}]` })
-		await account.click()
+		accountSeleted = accounts.findIndex((e) => findProfile(e, user))
+
+		const selector = `${selectors.selectProfile} > option:nth-child(${accountSeleted + 2})`
+		await page.evaluate((selector) => {
+			const selectProfileElement = document.querySelector(selector)
+			selectProfileElement.selected = true
+			selectProfileElement.click()
+		}, selector)
 	} catch (error) {
+		console.log(error)
 		throw new Error('Erro ao selecionar conta')
 	}
 }
- */
+
+async function selectIncludeLike05(checked: boolean) {
+	try {
+		await page.evaluate((checked, selector) => {
+			const includeLike05Element = document.querySelector(selector)
+			includeLike05Element.checked = checked
+		}, checked, selectors.includeLike05)
+	} catch (error) {
+		throw new Error('Erro em marcar "incluir Curtidas 0.5"')
+	}
+}
+
+async function selectIncludeTasks10(checked: boolean) {
+	try {
+		await page.evaluate((checked, selector) => {
+			const includeTask10Element = document.querySelector(selector)
+			includeTask10Element.checked = checked
+		}, checked, selectors.includeTask10)
+	} catch (error) {
+		throw new Error('Erro em marcar "incluir tarefas 1.0"')
+	}
+}
+
+
+async function clickInStart () {
+    try {
+      const btnStart = await page.waitForSelector(selectors.btnStart)
+      await btnStart.click()
+    } catch (error) {
+      throw new Error('Erro ao clicar em iniciar')
+    }
+  }
+
 
 
 async function start() {
@@ -114,7 +149,10 @@ async function start() {
 		await login('lu-anderson1@hotmail.com', 'Cfx2j45152020')
 		await waitLogin()
 		await goToConnectEndWin()
-		console.log(await getAllProfiles())
+		await chooseAccount('professor.andrelucas')
+		await selectIncludeLike05(true)
+		await selectIncludeTasks10(true)
+		await clickInStart()
 
 	} catch (error) {
 		console.log(error)
