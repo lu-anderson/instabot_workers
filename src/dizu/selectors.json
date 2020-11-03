@@ -5,5 +5,9 @@
     "selectProfile": "#instagram_id",
     "includeLike05": "#curtida05",
     "includeTask10": "#tarefas10",
-    "btnStart": "#iniciarTarefas"
+    "btnStart": "#iniciarTarefas",
+    "loader": ".loaderDiv",
+    "cardAction": ".tarefasLista",
+    "getTypeAction": ".btn_light > p:nth-child(2)",
+    "linkForAction": "#conectar_step_4"
 }

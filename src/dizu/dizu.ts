@@ -2,6 +2,8 @@ import { Browser, Page } from 'puppeteer'
 import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 
+
+import Instagram from '../instagram'
 import selectors from './selectors.json'
 import * as utils from '../utils'
 
@@ -100,8 +102,10 @@ async function chooseAccount(user: string) {
 		await page.evaluate((selector) => {
 			const selectProfileElement = document.querySelector(selector)
 			selectProfileElement.selected = true
-			selectProfileElement.click()
+			//selectProfileElement.click()
 		}, selector)
+		const selectElement = await page.waitForSelector(selectors.selectProfile)
+		await selectElement.click()
 	} catch (error) {
 		console.log(error)
 		throw new Error('Erro ao selecionar conta')
@@ -131,19 +135,92 @@ async function selectIncludeTasks10(checked: boolean) {
 }
 
 
-async function clickInStart () {
-    try {
-      const btnStart = await page.waitForSelector(selectors.btnStart)
-      await btnStart.click()
-    } catch (error) {
-      throw new Error('Erro ao clicar em iniciar')
-    }
-  }
+async function clickInStart() {
+	try {
+		const btnStart = await page.waitForSelector(selectors.btnStart)
+		await btnStart.click()
+	} catch (error) {
+		throw new Error('Erro ao clicar em iniciar')
+	}
+}
+
+async function waitLoaderIsNotVisible() {
+	try {
+		let loaderDisplay
+		do {
+			loaderDisplay = await page.evaluate((selector) => {
+				const loader = document.querySelector(selector)
+				return loader.style.display
+			}, selectors.loader)
+			await utils.timeout(1000, false)
+		} while (loaderDisplay !== 'none')
+
+		return true
+	} catch (error) {
+		return false
+	}
+}
+
+async function checkIfActionOn() {
+	try {
+		if (await waitLoaderIsNotVisible()) {
+			const cardAction = await page.waitForSelector(selectors.cardAction)
+			const isVisibleCardAction = await page.evaluate((cardAction) => {
+				if (cardAction.style.display !== 'none') return true
+				return false
+			}, cardAction)
+			if (isVisibleCardAction) return true
+		}
+		return false
+	} catch (error) {
+		throw new Error('Erro ao verificar se existe ação')
+	}
+}
+
+async function getTypeAction() {
+	try {
+		const typeAction = await page.waitForSelector(selectors.getTypeAction)
+		const typeActionTXT = await page.evaluate(element =>
+			element.textContent,
+			typeAction)
+		return typeActionTXT
+	} catch (error) {
+		return undefined
+	}
+}
+
+async function getLinkForAction() {
+	try {
+		const linkForAction = await page.waitForSelector('#conectar_step_4')
+		const linkActionTxt = await (await linkForAction.getProperty('href')).jsonValue()
+		return linkActionTxt
+	} catch (error) {
+		throw new Error('Erro ao obter o link da ação')
+	}
+}
+
+async function goToPageProfileInstagram(user: string) {
+	try {
+		await page.evaluate((user) => {
+			window.open(`https://www.instagram.com/${user}`, '_blank')
+		}, user)
+		const newWindowTarget = await browser.waitForTarget(target => !!target.url().match('https://www.instagram.com'))
+		return newWindowTarget.page()
+	} catch (error) {
+		console.log(error)
+		throw new Error('Erro ao tentar acessar o instagram')
+	}
+}
+
+
 
 
 
 async function start() {
 	try {
+
+
+
 		await startBrowser(false)
 		await goToDizu()
 		await login('lu-anderson1@hotmail.com', 'Cfx2j45152020')
@@ -153,6 +230,19 @@ async function start() {
 		await selectIncludeLike05(true)
 		await selectIncludeTasks10(true)
 		await clickInStart()
+		let isActionOn = await checkIfActionOn()
+
+		if (isActionOn) {
+			let typeAction = await getTypeAction()
+			console.log(`Nova ação: ${typeAction}`)
+
+			await getLinkForAction()
+			const pageInsta = await goToPageProfileInstagram('professor.andrelucas')
+			const instagram = new Instagram(pageInsta)
+			await instagram.clickInBtnFollowBeforeLogin()
+			await instagram.login('professor.andrelucas', 'andre3030lucas')
+
+		}
 
 	} catch (error) {
 		console.log(error)
