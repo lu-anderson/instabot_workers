@@ -1,7 +1,24 @@
-import selectors from './selectors.json'
+import path from 'path'
+import fs from 'fs'
+
 import { Page, ElementHandle } from 'puppeteer'
+
+
+import selectors from './selectors.json'
 import * as utils from '../utils'
 
+
+interface Cookies {
+    name: string,
+    value: string,
+    domain: string,
+    path: string,
+    expires: number,
+    size: number,
+    httpOnly: boolean,
+    secure: boolean,
+    session: boolean
+}
 
 class Instagram {
     private page: Page
@@ -73,6 +90,29 @@ class Instagram {
             console.error(error)
             throw new Error('Erro ao tentar fazer login no instagram, verifique sua conta')
         }
+    }
+
+    public async saveSession(user: string){
+        const cookies = await this.page.cookies()
+        
+        fs.writeFile(path.join(__dirname, 'sessions', `${user}.txt`), JSON.stringify(cookies), (err) => {
+            if(err) throw err
+        })
+    }
+
+    public getSession(user: string){
+        return new Promise<Cookies>((resolve, reject) => {
+            fs.readFile(path.join(__dirname, 'sessions', `${user}.txt`), 'utf8', (err, data) => {
+                if(err) reject(err)
+                resolve(JSON.parse(data))
+            })
+
+        })
+    }
+
+    public async setSession(cookies: Cookies[]){
+        await this.page.setCookie(...cookies)
+        await this.page.reload()
     }
 
 }
