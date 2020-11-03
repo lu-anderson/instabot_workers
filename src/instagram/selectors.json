@@ -1,0 +1,8 @@
+{
+    "btnFollowBeforeLogin2": " #react-root > section > main > div > header > section > div.nZSzR > div > div > div > a > button",
+    "inputLogin": "#loginForm > div.Igw0E.IwRSH.eGOV_._4EzTm.kEKum > div:nth-child(1) > div > label > input",
+    "inputPassword": "#loginForm > div.Igw0E.IwRSH.eGOV_._4EzTm.kEKum > div:nth-child(2) > div > label > input",
+    "btnLogin": "#loginForm > div.Igw0E.IwRSH.eGOV_._4EzTm.kEKum > div:nth-child(3) > button",
+    "cardLogin":".RnEpo",
+    "btnDiscardSaveInformation": "#react-root > section > main > div > div > div > div > button"
+}
