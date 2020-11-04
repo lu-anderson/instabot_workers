@@ -75,42 +75,75 @@ class Instagram {
         }
     }
 
-    public async login(user: string, password: string) {
+    /**
+        * force: Force the new login
+    */
+    public async login(user: string, password: string, force?: boolean) {
         try {
-            await this.insertCredentialsForLogin(user, password)
+            const hasSessionSaved = await this.checkIfFileExists(path.join(__dirname, 'sessions', `${user}.txt`))
+            if(!hasSessionSaved || force){
+                await this.clickInBtnFollowBeforeLogin()
+                await this.insertCredentialsForLogin(user, password)
+    
+                const btnLogin = await this.page.waitForSelector(selectors.btnLogin)
+                await btnLogin.click()
+                
+                await this.waitLogin()
 
-            const btnLogin = await this.page.waitForSelector(selectors.btnLogin)
-            await btnLogin.click()
+                await this.saveSession(user)
+                
+                await this.discardSaveInformation()
+                
+            }else {
+                const cookies = await this.getSession(user)
+                await this.setSession(cookies)
+                await this.page.reload()
+            }
 
-            await this.waitLogin()
-
-            await this.discardSaveInformation()
         } catch (error) {
-            console.error('Error in login')
             console.error(error)
             throw new Error('Erro ao tentar fazer login no instagram, verifique sua conta')
         }
     }
-
-    public async saveSession(user: string){
-        const cookies = await this.page.cookies()
-        
-        fs.writeFile(path.join(__dirname, 'sessions', `${user}.txt`), JSON.stringify(cookies), (err) => {
-            if(err) throw err
+    
+    private checkIfFileExists(pathToFile: string) {
+        console.log('')
+        return new Promise<boolean>((resolve, reject) => {
+            fs.stat(pathToFile, (err, stats) => {
+                if(!err && stats.isFile()){
+                    resolve(true)
+                }
+                if(err && err.code === 'ENOENT'){
+                    resolve(false)
+                }
+                if (err) reject(err)
+                
+            })
         })
     }
 
-    public getSession(user: string){
-        return new Promise<Cookies>((resolve, reject) => {
+    public async saveSession(user: string) {
+        const cookies = await this.page.cookies()
+
+        return new Promise<void>((resolve, reject) => {
+            fs.writeFile(path.join(__dirname, 'sessions', `${user}.txt`), JSON.stringify(cookies), (err) => {
+                if (err) reject(reject)
+                resolve()
+            })
+        })
+    }
+
+    public getSession(user: string) {
+        return new Promise<Cookies[]>((resolve, reject) => {
             fs.readFile(path.join(__dirname, 'sessions', `${user}.txt`), 'utf8', (err, data) => {
-                if(err) reject(err)
+                if (err) reject(err)
                 resolve(JSON.parse(data))
             })
 
         })
     }
 
-    public async setSession(cookies: Cookies[]){
+    public async setSession(cookies: Cookies[]) {
         await this.page.setCookie(...cookies)
         await this.page.reload()
     }
