@@ -9,5 +9,6 @@
     "loader": ".loaderDiv",
     "cardAction": ".tarefasLista",
     "getTypeAction": ".btn_light > p:nth-child(2)",
-    "linkForAction": "#conectar_step_4"
+    "linkForAction": "#conectar_step_4",
+    "divWithInfoTask": "body > div.container-fluid > div > div.content-body.col-sm-12.col-xs-12.col-lg-10.padd0 > div:nth-child(4) > div > div.row > div.col-sm-6.col-lg-6.col-xs-12.tarefasLista > div.box_user.tarefa.bg-white.sombra.Bradius15.col-sm-6.col-xs-12.col-lg-12.padd1.paddB2.marginT2.marginB2"
 }

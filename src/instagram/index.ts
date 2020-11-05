@@ -6,6 +6,7 @@ import { Page, ElementHandle } from 'puppeteer'
 
 import selectors from './selectors.json'
 import * as utils from '../utils'
+import endpoints from './endpoints'
 
 
 interface Cookies {
@@ -81,20 +82,20 @@ class Instagram {
     public async login(user: string, password: string, force?: boolean) {
         try {
             const hasSessionSaved = await this.checkIfFileExists(path.join(__dirname, 'sessions', `${user}.txt`))
-            if(!hasSessionSaved || force){
+            if (!hasSessionSaved || force) {
                 await this.clickInBtnFollowBeforeLogin()
                 await this.insertCredentialsForLogin(user, password)
-    
+
                 const btnLogin = await this.page.waitForSelector(selectors.btnLogin)
                 await btnLogin.click()
-                
+
                 await this.waitLogin()
 
                 await this.saveSession(user)
-                
+
                 await this.discardSaveInformation()
-                
-            }else {
+
+            } else {
                 const cookies = await this.getSession(user)
                 await this.setSession(cookies)
                 await this.page.reload()
@@ -105,19 +106,17 @@ class Instagram {
             throw new Error('Erro ao tentar fazer login no instagram, verifique sua conta')
         }
     }
-    
+
     private checkIfFileExists(pathToFile: string) {
-        console.log('')
         return new Promise<boolean>((resolve, reject) => {
             fs.stat(pathToFile, (err, stats) => {
-                if(!err && stats.isFile()){
+                if (!err && stats.isFile()) {
                     resolve(true)
                 }
-                if(err && err.code === 'ENOENT'){
+                if (err && err.code === 'ENOENT') {
                     resolve(false)
                 }
                 if (err) reject(err)
-                
             })
         })
     }
@@ -147,6 +146,13 @@ class Instagram {
         await this.page.setCookie(...cookies)
         await this.page.reload()
     }
+
+    public async follow() {
+        const response = await this.page.evaluate(() => {
+            const userId = ''
+        })
+    }   
+
 
 }
 

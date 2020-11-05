@@ -13,7 +13,7 @@ let browser: Browser
 let page: Page
 
 async function startBrowser(headless: boolean) {
-	browser = await puppeteer.launch({ headless, devtools: false })
+	browser = await puppeteer.launch({ headless, devtools: true })
 }
 
 async function goToDizu() {
@@ -180,12 +180,25 @@ async function checkIfActionOn() {
 async function getTypeAction() {
 	try {
 		const typeAction = await page.waitForSelector(selectors.getTypeAction)
-		const typeActionTXT = await page.evaluate(element =>
+		const typeActionTXT: string = await page.evaluate(element =>
 			element.textContent,
 			typeAction)
 		return typeActionTXT
 	} catch (error) {
 		return undefined
+	}
+}
+
+async function getUserID(){
+	try {
+		const divElement = await page.waitForSelector(selectors.divWithInfoTask)
+		const dataTarefa = await page.evaluate((element) => {
+			return element.getAttribute("data-tarefa")
+		}, divElement)
+		const userID: number = JSON.parse(dataTarefa).instagramPkID
+		return userID
+	} catch (error) {
+		throw new Error('Erro ao obter o userID')
 	}
 }
 
@@ -218,29 +231,29 @@ async function goToPageProfileInstagram(user: string) {
 
 async function start() {
 	try {
-
-
-
 		await startBrowser(false)
-		await goToDizu()
+		await goToDizu()		
 		await login('lu-anderson1@hotmail.com', 'Cfx2j45152020')
 		await waitLogin()
 		await goToConnectEndWin()
 		await chooseAccount('professor.andrelucas')
 		await selectIncludeLike05(true)
 		await selectIncludeTasks10(true)
-		await clickInStart()
+		await clickInStart()		
+		
 		let isActionOn = await checkIfActionOn()
 
 		if (isActionOn) {
 			let typeAction = await getTypeAction()
 			console.log(`Nova ação: ${typeAction}`)
+			if(typeAction === 'Seguir'){
+				const userID = await getUserID()
+				const pageInsta = await goToPageProfileInstagram('professor.andrelucas')
+				const instagram = new Instagram(pageInsta)
+				await instagram.login('professor.andrelucas', 'andre3030lucas')
 
-			await getLinkForAction()
-			const pageInsta = await goToPageProfileInstagram('professor.andrelucas')
-			const instagram = new Instagram(pageInsta)
-			await instagram.clickInBtnFollowBeforeLogin()
-			await instagram.login('professor.andrelucas', 'andre3030lucas')
+			}
+			
 
 		}
 
