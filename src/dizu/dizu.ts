@@ -267,6 +267,7 @@ async function start() {
 				console.log(userID)
 				await instagram.followByUserID(userID)
 				await confirmAction()
+				console.log('Teste de ssh')
 			}
 			
 
