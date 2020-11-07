@@ -203,8 +203,10 @@ class Instagram {
     
             if (response.status == 200) {
                 console.log(`Success in following`)
+                return true
             } else {
                 console.log(response)
+                return false
             }
         } catch (error) {
             throw error
@@ -215,7 +217,7 @@ class Instagram {
         try {
             this.checkIsLogged()
             const id = await this.getIdByUsername(username)
-            await this.followByUserID(id)
+            return await this.followByUserID(id)
 
         } catch (error) {
             throw error

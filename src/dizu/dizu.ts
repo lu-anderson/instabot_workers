@@ -226,6 +226,13 @@ async function goToPageProfileInstagram(user: string) {
 	}
 }
 
+async function confirmAction(){
+	const btn = await page.waitForSelector(selectors.btnConfirmAction)
+	await page.evaluate((btn) => {
+		btn.click()
+	}, btn)
+}
+
 
 
 
@@ -233,9 +240,13 @@ async function goToPageProfileInstagram(user: string) {
 async function start() {
 	try {
 		console.log('New version')
+		console.log('Starting browser')
 		await startBrowser(false)
-		await goToDizu()		
+		console.log('Navigate to Dizu')
+		await goToDizu()
+		console.log('Logging in')		
 		await login('lu-anderson1@hotmail.com', 'Cfx2j45152020')
+		console.log('Waiting logging')
 		await waitLogin()
 		await goToConnectEndWin()
 		await chooseAccount('professor.andrelucas')
@@ -250,11 +261,12 @@ async function start() {
 			console.log(`Nova ação: ${typeAction}`)
 			if(typeAction === 'Seguir'){
 				const userID = await getUserID()
-				const pageInsta = await goToPageProfileInstagram('professor.andrelucas')
 
 				const instagram = new Instagram('professor.andrelucas', 'andre3030lucas')
 				await instagram.login()
-
+				console.log(userID)
+				await instagram.followByUserID(userID)
+				await confirmAction()
 			}
 			
 
