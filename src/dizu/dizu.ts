@@ -3,7 +3,7 @@ import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 
 
-import Instagram from '../instagram'
+import Instagram from '../instagramAPI/core/instagram'
 import selectors from './selectors.json'
 import * as utils from '../utils'
 
@@ -12,8 +12,9 @@ puppeteer.use(StealthPlugin())
 let browser: Browser
 let page: Page
 
+
 async function startBrowser(headless: boolean) {
-	browser = await puppeteer.launch({ headless, devtools: true })
+	browser = await puppeteer.launch({ headless, devtools: false })
 }
 
 async function goToDizu() {
@@ -231,6 +232,7 @@ async function goToPageProfileInstagram(user: string) {
 
 async function start() {
 	try {
+		console.log('New version')
 		await startBrowser(false)
 		await goToDizu()		
 		await login('lu-anderson1@hotmail.com', 'Cfx2j45152020')
@@ -249,8 +251,9 @@ async function start() {
 			if(typeAction === 'Seguir'){
 				const userID = await getUserID()
 				const pageInsta = await goToPageProfileInstagram('professor.andrelucas')
-				const instagram = new Instagram(pageInsta)
-				await instagram.login('professor.andrelucas', 'andre3030lucas')
+
+				const instagram = new Instagram('professor.andrelucas', 'andre3030lucas')
+				await instagram.login()
 
 			}
 			
