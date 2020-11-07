@@ -6,6 +6,7 @@ import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 import Instagram from '../instagramAPI/core/instagram'
 import selectors from './selectors.json'
 import * as utils from '../utils'
+import { markAsUntransferable } from 'worker_threads'
 
 puppeteer.use(StealthPlugin())
 
@@ -190,7 +191,7 @@ async function getTypeAction() {
 	}
 }
 
-async function getUserID(){
+async function getUserID() {
 	try {
 		const divElement = await page.waitForSelector(selectors.divWithInfoTask)
 		const dataTarefa = await page.evaluate((element) => {
@@ -226,7 +227,18 @@ async function goToPageProfileInstagram(user: string) {
 	}
 }
 
-async function confirmAction(){
+async function doAction(action: string | undefined, instagram: Instagram) {
+	if (action === 'Seguir') {
+		const userID = await getUserID()
+		console.log(userID)
+		return await instagram.followByUserID(userID)
+
+	} else {
+		throw new Error(`Action type not is follow: ${action}`)
+	}
+}
+
+async function confirmAction() {
 	const btn = await page.waitForSelector(selectors.btnConfirmAction)
 	await page.evaluate((btn) => {
 		btn.click()
@@ -237,45 +249,73 @@ async function confirmAction(){
 
 
 
-async function start() {
+async function start(
+	userDizu: string,
+	passwordDizu: string,
+	userInsta: string,
+	passwordInsta: string
+) {
 	try {
-		console.log('New version')
 		console.log('Starting browser')
 		await startBrowser(false)
 		console.log('Navigate to Dizu')
 		await goToDizu()
-		console.log('Logging in')		
-		await login('lu-anderson1@hotmail.com', 'Cfx2j45152020')
+		console.log('Logging in')
+		await login(userDizu, passwordDizu)
 		console.log('Waiting logging')
 		await waitLogin()
 		await goToConnectEndWin()
 		await chooseAccount('professor.andrelucas')
 		await selectIncludeLike05(true)
 		await selectIncludeTasks10(true)
-		await clickInStart()		
-		
+		await clickInStart()
+
+		console.log('Checking if exists actions')
 		let isActionOn = await checkIfActionOn()
+		let typeAction: string | undefined
+		let contActions = 0
 
 		if (isActionOn) {
-			let typeAction = await getTypeAction()
-			console.log(`Nova ação: ${typeAction}`)
-			if(typeAction === 'Seguir'){
-				const userID = await getUserID()
+			const instagram = new Instagram(userInsta, passwordInsta)
+			await instagram.login()
 
-				const instagram = new Instagram('professor.andrelucas', 'andre3030lucas')
-				await instagram.login()
-				console.log(userID)
-				await instagram.followByUserID(userID)
+			while (contActions < 10 && isActionOn) {
+
+				typeAction = await getTypeAction()
+				console.log(`New Action: ${typeAction}`)
+
+				const actionSuccess = await doAction(typeAction, instagram)
+
+				if(actionSuccess){
+					console.log('Action taken')
+				}
+				
 				await confirmAction()
-				console.log('Teste de ssh')
-			}
-			
+				contActions++
 
+				console.log(`Total actions taken: ${contActions}`)
+
+				
+
+				if (contActions < 10){
+					console.log('Checking if exists new actions')
+					isActionOn = await checkIfActionOn()
+					if(isActionOn){
+						await utils.timeout(15000, true)
+					}
+				}
+			}
 		}
+
+
 
 	} catch (error) {
 		console.log(error)
 	}
 }
 
-start()
+start(
+	'lu-anderson1@hotmail.com',
+	'Cfx2j45152020',
+	'professor.andrelucas',
+	'andre3030lucas')
