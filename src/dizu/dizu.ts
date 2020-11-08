@@ -2,17 +2,23 @@ import { Browser, Page } from 'puppeteer'
 import puppeteer from 'puppeteer-extra'
 import StealthPlugin from 'puppeteer-extra-plugin-stealth'
 
-
 import Instagram from '../instagramAPI/core/instagram'
 import selectors from './selectors.json'
 import * as utils from '../utils'
-import { markAsUntransferable } from 'worker_threads'
 
 puppeteer.use(StealthPlugin())
 
 let browser: Browser
 let page: Page
 
+
+
+interface Proxy {
+	host: string,
+	port: string,
+	username: string,
+	password: string
+}
 
 async function startBrowser(headless: boolean) {
 	browser = await puppeteer.launch({ headless, devtools: false })
@@ -50,7 +56,7 @@ async function login(user: string, password: string) {
 
 async function waitLogin() {
 	try {
-		const newWindowTarget = await browser.waitForTarget(target => target.url() === 'https://dizu.com.br/painel');
+		const newWindowTarget = await browser.waitForTarget(target => target.url() === 'https://dizu.com.br/painel')
 		page = await newWindowTarget.page()
 	} catch (error) {
 		throw new Error('Erro ao esperar o login')
@@ -89,16 +95,16 @@ async function getAllProfiles() {
 	}
 }
 
-function findProfile(userInArray: string, user: string) {
-	const index = userInArray.indexOf(user)
+function findProfile(profileInArray: string, profile: string) {
+	const index = profileInArray.indexOf(profile)
 	return index > -1
 }
 
-async function chooseAccount(user: string) {
+async function chooseProfile(profile: string) {
 	try {
 		let accountSeleted = 0
 		const accounts = await getAllProfiles()
-		accountSeleted = accounts.findIndex((e) => findProfile(e, user))
+		accountSeleted = accounts.findIndex((e) => findProfile(e, profile))
 
 		const selector = `${selectors.selectProfile} > option:nth-child(${accountSeleted + 2})`
 		await page.evaluate((selector) => {
@@ -253,7 +259,11 @@ async function start(
 	userDizu: string,
 	passwordDizu: string,
 	userInsta: string,
-	passwordInsta: string
+	passwordInsta: string,
+	proxy: Proxy,
+	numberOfActions: number,
+	minTimeRandom: number,
+	maxTimeRandom: number
 ) {
 	try {
 		console.log('Starting browser')
@@ -265,7 +275,7 @@ async function start(
 		console.log('Waiting logging')
 		await waitLogin()
 		await goToConnectEndWin()
-		await chooseAccount('professor.andrelucas')
+		await chooseProfile(userInsta)
 		await selectIncludeLike05(true)
 		await selectIncludeTasks10(true)
 		await clickInStart()
@@ -277,6 +287,14 @@ async function start(
 
 		if (isActionOn) {
 			const instagram = new Instagram(userInsta, passwordInsta)
+			if (proxy)
+				instagram.setProxy(
+					proxy.host,
+					proxy.port,
+					proxy.username,
+					proxy.password
+
+				)
 			await instagram.login()
 
 			while (contActions < 10 && isActionOn) {
@@ -286,22 +304,21 @@ async function start(
 
 				const actionSuccess = await doAction(typeAction, instagram)
 
-				if(actionSuccess){
+				if (actionSuccess) {
 					console.log('Action taken')
 				}
-				
+
 				await confirmAction()
 				contActions++
 
 				console.log(`Total actions taken: ${contActions}`)
 
-				
-
-				if (contActions < 10){
+				if (contActions < 10) {
 					console.log('Checking if exists new actions')
 					isActionOn = await checkIfActionOn()
-					if(isActionOn){
-						await utils.timeout(15000, true)
+					if (isActionOn) {
+						const timeRandom = utils.getRandomInt(minTimeRandom, maxTimeRandom)
+						await utils.timeout(timeRandom * 1000, true)
 					}
 				}
 			}
@@ -317,5 +334,16 @@ async function start(
 start(
 	'lu-anderson1@hotmail.com',
 	'Cfx2j45152020',
-	'professor.andrelucas',
-	'andre3030lucas')
+	'jessicasantos5254',
+	'G@ai45lk',
+	{
+		host: 'zproxy.lum-superproxy.io',
+		port: '22225',
+		username: 'lum-customer-hl_88429293-zone-brasil2-ip-45.130.213.233',
+		password: 'j1or7h42ri1i'
+	},
+	10,
+	15,
+	40
+)
+
