@@ -1,6 +1,7 @@
 import fs from 'fs'
 import path from 'path'
-import axios from 'axios'
+import axios, { AxiosInstance } from 'axios'
+import HttpsProxyAgent from 'https-proxy-agent'
 
 
 import endpoints from './endpoints'
@@ -20,6 +21,7 @@ class Instagram {
     private headers = {}
     private ownerUsername: string
     private ownerPassword: string
+    private requestAxios: AxiosInstance
 
     /**
      * 
@@ -29,6 +31,7 @@ class Instagram {
     constructor(username: string, password: string) {
         this.ownerUsername = username
         this.ownerPassword = password
+        this.requestAxios = axios.create()
     }
 
     /**
@@ -40,7 +43,7 @@ class Instagram {
             const hasSessionSaved = await this.checkIfFileExists(path.resolve(__dirname, `../sessions/${this.ownerUsername}.json`))
 
             if (!hasSessionSaved || force) {
-                let response = await axios.get(endpoints.BASE_URL)
+                let response = await this.requestAxios.get(endpoints.BASE_URL)
 
                 let csrftoken: string = response.headers['set-cookie'].find((cookie: string) => cookie.match('csrftoken='))
                     .split(';')[0].split('=')[1]
@@ -58,7 +61,7 @@ class Instagram {
 
                 const payload = `username=${this.ownerUsername}&enc_password=${encodeURIComponent(`#PWD_INSTAGRAM_BROWSER:0:${Math.ceil((new Date().getTime() / 1000))}:${this.ownerPassword}`)}`
 
-                response = await axios({
+                response = await this.requestAxios({
                     method: 'post',
                     url: endpoints.LOGIN_URL,
                     data: payload,
@@ -70,7 +73,7 @@ class Instagram {
                 } else if (!response.data.authenticated) {
                     throw { error: 'Password is wrong' }
                 } else {
-                    console.log('Success in login')
+                    console.log('Success in new login')
 
                     csrftoken = response.headers['set-cookie'].find((cookie: String) => cookie.match('csrftoken='))
                         .split(';')[0]
@@ -116,6 +119,7 @@ class Instagram {
                     await this.saveSession(cookies)
                 }
             } else {
+                console.log('Success in keep login')
                 this.generateHeaders()
             }
         } catch (error) {
@@ -178,7 +182,7 @@ class Instagram {
     public async getIdByUsername(username: String) {
         try {            
             this.checkIsLogged()
-            const response = await axios({
+            const response = await this.requestAxios({
                 method: 'get',
                 url: endpoints.ACCOUNT_JSON_INFO(username),
                 headers: this.headers
@@ -195,7 +199,7 @@ class Instagram {
         try {
             this.checkIsLogged()
             const url = endpoints.FOLLOW_URL(id)
-            const response = await axios({
+            const response = await this.requestAxios({
                 method: 'post',
                 url: url,
                 headers: this.headers
@@ -217,7 +221,7 @@ class Instagram {
         try {
             this.checkIsLogged()
             const id = await this.getIdByUsername(username)
-            return await this.followByUserID(id)
+            await this.followByUserID(id)
 
         } catch (error) {
             throw error
@@ -231,6 +235,22 @@ class Instagram {
     private async likeByShortcode(shortcode: String) {
         const headers = this.generateHeaders()
         const id = ''
+    }
+
+
+    public setProxy(host: string, port: string, username: string, password: string){
+        const auth = `${username}:${password}`
+        const httpsAgent = HttpsProxyAgent({host, port, auth})
+        this.requestAxios = axios.create({httpsAgent})
+    }
+
+    public async testProxy(){
+        try {
+            const response = await this.requestAxios.get('http://lumtest.com/myip.json')
+            console.log(response.data)
+        } catch (error) {
+            throw error
+        }
     }
 }
 
